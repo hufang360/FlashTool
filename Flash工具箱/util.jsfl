@@ -143,3 +143,14 @@ function strip(str, reStr) {
 
     return str.substring(sIndex, eIndex);
 }
+
+// 记忆上次输入的sprite参数 行,列,插帧数
+var sprite_txt_URI = localStorage+"sprite.txt"
+var sprite_txt_URL = FLfile.uriToPlatformPath(sprite_txt_URI)
+// 若没有 txt 则返回‘’
+function getSpriteParam(){
+    return getTxt(sprite_txt_URI)
+}
+function setSpriteParam(str){
+    setTxt(str,sprite_txt_URI)
+}

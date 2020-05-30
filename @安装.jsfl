@@ -18,6 +18,7 @@ var arr = [
     "fla.jsfl",
     "doc.jsfl",
 	"timeline.jsfl",
+	"sprite.jsfl",
 	
 	"util.jsfl"	//工具类
 ];
