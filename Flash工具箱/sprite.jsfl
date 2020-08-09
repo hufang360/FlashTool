@@ -85,6 +85,9 @@ function importSprite()
 		timeline.currentFrame = indexArr[index];
 		timeline.convertToKeyframes();
 	}
+
+	cut_rectangle_img(doc, timeline, 0, pW, pH)
+
 	// 调节位置
 	var rX = 0;
 	var rY = 0;
@@ -92,6 +95,8 @@ function importSprite()
 	var count = 1;
 	for(index in indexArr){
 		i = indexArr[index];
+		// timeline.currentFrame = indexArr[index];
+
 		curItem = layerPng.frames[i].elements[0];
 
 		rX = count%inputCol;
@@ -99,23 +104,72 @@ function importSprite()
 		curItem.x = -(rX * pW);
 		curItem.y = -(rY * pH);
 
+		cut_rectangle_img(doc, timeline, i, pW, pH)
+
 		count ++;
 	}
-	
-	// 添加遮罩层
-	timeline.addNewLayer("mask");
-	timeline.setLayerProperty('layerType', 'mask');
-	doc.addNewPrimitiveRectangle({left:0, top:0, right:pW, bottom:pH}, 0);
-	timeline.setLayerProperty('locked', true);
 
 	// 将png所在图层改名，并设置为遮罩层，并锁定以便于预览
-	timeline.layers[1].name = "png"
-	timeline.setSelectedLayers(1);
-	timeline.setLayerProperty('layerType', 'masked');
-	timeline.setLayerProperty('locked', true);
+	timeline.layers[0].name = "png"
 
 	// doc.exitEditMode();
 	// doc.library.selectItem(itemName);
+
+
+
+
+
+
+		// // 调节位置
+		// var rX = 0;
+		// var rY = 0;
+		// var i = 0;
+		// var count = 1;
+		// for(index in indexArr){
+		// 	i = indexArr[index];
+		// 	curItem = layerPng.frames[i].elements[0];
+	
+		// 	rX = count%inputCol;
+		// 	rY = Math.floor(count/inputCol);
+		// 	curItem.x = -(rX * pW);
+		// 	curItem.y = -(rY * pH);
+	
+		// 	count ++;
+		// }
+		
+		// // 添加遮罩层
+		// timeline.addNewLayer("mask");
+		// timeline.setLayerProperty('layerType', 'mask');
+		// doc.addNewPrimitiveRectangle({left:0, top:0, right:pW, bottom:pH}, 0);
+		// timeline.setLayerProperty('locked', true);
+	
+		// // 将png所在图层改名，并设置为遮罩层，并锁定以便于预览
+		// timeline.layers[1].name = "png"
+		// timeline.setSelectedLayers(1);
+		// timeline.setLayerProperty('layerType', 'masked');
+		// timeline.setLayerProperty('locked', true);
+	
+		// // doc.exitEditMode();
+		// // doc.library.selectItem(itemName);
+}
+
+function cut_rectangle_img(doc, timeline, i, pW, pH){
+	timeline.setSelectedFrames(i, i)
+	doc.breakApart();
+	// timeline.layers[1].name = "png"
+	// timeline.setSelectedLayers(1);
+	
+	// 分离图像
+	// 选中指定区域 进行复制
+	// 选中全部 并删除
+	// 粘贴复制的图像
+	// 调整图像到起始点位置
+	doc.setSelectionRect({left:0, top:0, right:pW, bottom:pH}, true, true);
+	doc.clipCopy();
+	doc.selectAll();
+	doc.deleteSelection();
+	doc.clipPaste();
+	doc.moveSelectionBy({x:0, y:0});
 }
 
 

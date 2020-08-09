@@ -109,6 +109,39 @@ function libReplace() {
   //fl.getDocumentDOM().library.items[0].itemType
 }
 
+function libPixel(){
+//   var lib = an.getDocumentDOM().library;
+// lib.setItemProperty('allowSmoothing', false);
+// lib.setItemProperty('compressionType', 'lossless');
+
+  //打开的文档
+  var doc = fl.getDocumentDOM();
+  if (!doc) {
+    alert("请打开fla文档");
+    return;
+  }
+
+  var libSelection = doc.library.getSelectedItems();
+  if (!libSelection || libSelection.length == 0) {
+    alert("请在库中选择多个位图元件");
+    return;
+  }
+
+  var count = 0;
+  for ( var k=0; k<libSelection.length;k++ ) {
+    lib_item = libSelection[k];
+    if (lib_item.itemType == 'bitmap') {
+      lib_item.allowSmoothing = false;
+      lib_item.compressionType = 'lossless';
+      count ++
+    }
+  }
+
+  if (count==0){
+    alert("选中库元件都不是 位图元件！！")
+  }
+
+}
 
 // 按类型整理库
 function libConclude(){
