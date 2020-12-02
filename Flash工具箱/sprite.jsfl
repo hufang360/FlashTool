@@ -8,7 +8,7 @@ function importSprite()
 	var doc = fl.getDocumentDOM();
 	if (!doc) {
 		alert("请打开fla文档");
-		return tl;
+		return;
 	}
 	var lib = doc.library;
 

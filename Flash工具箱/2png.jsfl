@@ -44,9 +44,8 @@ function view2png(fURL) {
   // showStr = showStr.replace("file:///","");
   // showStr = showStr.replace("|/",":/");
   // alert(showStr);
-  var boo = confirm(showStr);
-  if (boo)
-    openFolder(folder);
+  if (confirm(showStr))
+    selectFile(pngName);
 }
 
 
@@ -59,11 +58,6 @@ function view2png(fURL) {
 //  素材将保存到脚本目录下的 JSFL 文件夹里
 //	支持设置导出的素材名称
 //	支持将素材放大导出
-
-
-
-
-
 function selection2png(fURL) {
   var folder = fURL;
   FLfile.createFolder(folder);
@@ -155,7 +149,7 @@ function selection2png(fURL) {
   // showStr = showStr.replace("|/",":/");
   var boo = confirm(showStr);
   if (boo)
-    openFolder(folder);
+    selectFile(pngName)
 }
 
 
@@ -318,9 +312,8 @@ function layer2png(fURL) {
   // showStr = showStr.replace("|/",":/");
   // showStr = showStr.replace("file:///","");
   // showStr = showStr.replace("|/",":/");
-  var boo = confirm(showStr);
-  if (boo)
-    openFolder(folder);
+  if (confirm(showStr))
+    selectFile(pngName);
 }
 
 function lib2png(fURL,hideAlert)
@@ -342,8 +335,8 @@ function lib2png(fURL,hideAlert)
 	}
 
   var pathName = folder + doc.name + "/";
-	var fileName;
-
+	var fileName = "";
+  var fileNameFirst = "";
   var itemNum = libSelection.length;
 	if (itemNum > 0){
 		//清空对应目录
@@ -376,7 +369,8 @@ function lib2png(fURL,hideAlert)
         lName = lName.substring(index+1);
       
       fl.trace("库元件导出 " + lName);
-      fileName = pathName + lName + ".png";
+      fileName = pathName + lName + "_.png";
+      fileNameFirst = pathName + lName + "_0001.png";
       libItem.exportToPNGSequence(fileName);
       count++;
       //}
@@ -397,8 +391,13 @@ function lib2png(fURL,hideAlert)
     var boo = false;
     if (!hideAlert)
       boo = confirm(showStr);
-    if ( boo)
-      openFolder(pathName);
+    if ( boo ){
+      if (FLfile.exists(fileNameFirst))
+       selectFile(fileNameFirst); // 尝试选中第一个文件
+      else
+        openFolder(pathName);
+    }
+
   } else {
     alert("( ˇˍˇ )没有找到元件（文件夹内的元件不被导出）");
   }
@@ -449,5 +448,14 @@ function openFolder(folderPath){
       pStr = 'open "'+folderPath+'"';
   else
       pStr = 'start explorer "'+folderPath+'"';
+  FLfile.runCommandLine(pStr);
+}
+
+function selectFile(folderPath){
+  folderPath = FLfile.uriToPlatformPath(folderPath);
+  if (isMac)
+      pStr = 'open -R "'+folderPath+'"';
+  else
+      pStr = 'explorer /select,"'+folderPath+'"';
   FLfile.runCommandLine(pStr);
 }

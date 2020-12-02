@@ -123,7 +123,7 @@ function libPixel(){
 
   var libSelection = doc.library.getSelectedItems();
   if (!libSelection || libSelection.length == 0) {
-    alert("请在库中选择多个位图元件");
+    alert("请在库中选择一个或多个位图元件");
     return;
   }
 
