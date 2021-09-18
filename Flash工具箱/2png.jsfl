@@ -1,5 +1,6 @@
 ﻿
 
+// 重置导出设置
 function showExportPng(fURL) {
   //交互提示
   var boo = confirm('导出功能修正\n将弹出"Flash导出png"对话框，请做如下调整: \n\t分辨率(R):  72 dpi \n\t包含(I):  完整文档大小 \n\t颜色(C):  32位 \n\t勾选 平滑(S)');
@@ -8,12 +9,12 @@ function showExportPng(fURL) {
 
   var folder = fURL;
   FLfile.createFolder(folder);
-    
+
   var doc = fl.createDocument();
   doc.width = 100;
   doc.height = 100;
   doc.backgroundColor="#000000";
-  
+
   var pngName = folder + "0_0.png";
   doc.exportPNG(pngName, false, false);
   doc.close(false);
@@ -39,13 +40,8 @@ function view2png(fURL) {
   pngName = pngName.replace(".fla","");
   doc.exportPNG(pngName, true, true);
 
-  var showStr = "☀☀☀( ^_^ )☀☀☀\n已导出到：\n" + FLfile.uriToPlatformPath(pngName);
-  showStr += "\n是否打开输出目录？";
-  // showStr = showStr.replace("file:///","");
-  // showStr = showStr.replace("|/",":/");
-  // alert(showStr);
-  if (confirm(showStr))
-    selectFile(pngName);
+  // 导出完成提示
+  showResult(pngName);
 }
 
 
@@ -53,11 +49,12 @@ function view2png(fURL) {
 
 
 
-//导出所选到png v1.3
+//导出所选到png v1.4
 //将flash所选内容保存为png
 //  素材将保存到脚本目录下的 JSFL 文件夹里
 //	支持设置导出的素材名称
 //	支持将素材放大导出
+//	支持逐个导出选中元素
 function selection2png(fURL) {
   var folder = fURL;
   FLfile.createFolder(folder);
@@ -70,11 +67,29 @@ function selection2png(fURL) {
   }
 
   //判断是否有所选内容
-  if (doc.selection.length == 0) {
+  var len = doc.selection.length;
+  if (len == 0) {
     alert("请在舞台选择一个元素");
     return;
   }
 
+  if (len > 1) {
+    // 逐个导出选中元素
+    var showStr ="你选中了多个元素，是否逐个导出？\n“确定”，将逐个导出；\n“取消”，将所有元素导出成一张图片；";
+    var boo = confirm(showStr);
+    if( boo )
+    {
+      exportMultiSelection(doc, folder);
+      return;
+    }
+  }
+
+  // 合并导出
+  exportMergeSelection(doc, folder);
+}
+
+// 合并导出
+function exportMergeSelection(doc, folder) {
   //获取选中的元件名称
   var eleName = "";
   if (doc.selection.length == 1) {
@@ -103,7 +118,86 @@ function selection2png(fURL) {
   inputRate = parseFloat(inputRate);
   if (!inputRate) inputRate = 1;
 
+  // 导出
+  var timeStr = getTimeStr();
+  var pngName = folder + timeStr + "_" + eleName + ".png";
+  exportOneSelection(doc, pngName, inputRate);
+
+  // 导出完成提示
+  showResult(pngName);
+}
+
+// 逐个导出所选
+function exportMultiSelection(doc, folder) {
+  var eleName = "";
+  //交互提示
+  var prefixName = prompt("请输入素材前缀名（留空则使用实例名称）", "0_");
+  if (prefixName == null) return;
+
+  var inputRate = prompt("请输入放大倍数", 1);
+  if (inputRate == null) return;
+  inputRate = parseFloat(inputRate);
+  if (!inputRate) inputRate = 1;
+
+  //重新创建对应目录
+  folder += doc.name;
+  FLfile.createFolder(folder);
+  fl.trace("creatFolder:"+folder);
+  if (!FLfile.exists(folder)) {
+    alert("保存png的文件夹创建失败！！！");
+    return;
+  }
+
+  // 暂存选中记录
+  var selections = new Array();
+  var len = doc.selection.length;
+  for (var i = 0; i < len; i++) {
+    selections.push( doc.selection[i] );
+  }
+
+  var count = 0;
+  var pngName = "";
+  for (var i = 0; i < len; i++) {
+    var ele = selections[i];
+    doc.selectNone();
+    doc.selection = [ele];
+
+    eleName = "";
+    if ( prefixName == "" ){
+      //获取选中的元件名称
+      if (ele.elementType == "instance") {
+          eleName = ele.name;
+      }
+      if( eleName=="" )
+      {
+        count++;
+        eleName = count.toString();
+      }
+    } else {
+      // 使用前缀
+      count++;
+      eleName = prefixName + "" +count;
+    }
+
+    pngName = folder + "/" +  eleName + ".png";
+
+    // 导出选中
+    exportOneSelection(doc, pngName, inputRate);
+  }
+
+  // 恢复选中记录
+  doc.selectNone();
+  doc.selection = selections;
+
+  // 导出完成提示
+  showResult(pngName);
+}
+
+// 导出一个选中对象
+function exportOneSelection(doc, pngName, inputRate)
+{
   //拷贝所选内容到新的文档
+  // 打散的形状，不能执行复制操作，可以人工ctrl+g打组处理，然后再导出
   doc.clipCopy();
 
   //创建新文档
@@ -131,25 +225,14 @@ function selection2png(fURL) {
   exportDoc.width = bmW;
   exportDoc.height = bmH;
 
-  var timeStr = getTimeStr();
-  var pngName = folder + timeStr + "_" + eleName + ".png";
-
   //去掉文件的扩展名
   //pngName = pngName.replace("fla","");
   //pngName = pngName.replace(".xfl","");
   exportDoc.selectNone();
 
-  fl.trace(pngName);
+  // fl.trace(pngName);
   exportDoc.exportPNG(pngName, true, true);
   exportDoc.close(false);
-
-  var showStr ="☀☀☀( ^_^ )☀☀☀\n已导出到：\n" + FLfile.uriToPlatformPath(pngName);
-  showStr += "\n是否打开输出目录？";
-  // showStr = showStr.replace("file:///","");
-  // showStr = showStr.replace("|/",":/");
-  var boo = confirm(showStr);
-  if (boo)
-    selectFile(pngName)
 }
 
 
@@ -171,7 +254,6 @@ function selection2png(fURL) {
 	被遮罩的图层将在应用遮罩效果后一层层地被导出
 	遮罩层上的内容将不会被导出；
 */
-
 function layer2png(fURL) {
   var folder = fURL;
   FLfile.createFolder(folder);
@@ -220,8 +302,6 @@ function layer2png(fURL) {
   }
 
   //单独显示每个要导出的文件，并导出文件
-  var names = [];
-  var layerName = "name";
   var maskIndex = [];
   var maskedIndex = [];
   for (var i = 0; i < len; i++) {
@@ -305,18 +385,11 @@ function layer2png(fURL) {
     layer.locked = status[i].locked;
   }
 
-  //保存提示
-  var showStr = "☀☀☀( ^_^ )☀☀☀\n已导出到：\n" + FLfile.uriToPlatformPath(folder);
-  showStr += "\n是否打开输出目录？";
-  // showStr = showStr.replace("file:///","");
-  // showStr = showStr.replace("|/",":/");
-  // showStr = showStr.replace("file:///","");
-  // showStr = showStr.replace("|/",":/");
-  if (confirm(showStr))
-    selectFile(pngName);
+  // 导出完成提示
+  showResult(pngName);
 }
 
-function lib2png(fURL,hideAlert)
+function lib2png(fURL)
 {
   var folder = fURL;
   FLfile.createFolder(folder);
@@ -367,7 +440,7 @@ function lib2png(fURL,hideAlert)
       var index = lName.lastIndexOf("/");
       if( index != -1 )
         lName = lName.substring(index+1);
-      
+
       fl.trace("库元件导出 " + lName);
       fileName = pathName + lName + "_.png";
       fileNameFirst = pathName + lName + "_0001.png";
@@ -377,27 +450,9 @@ function lib2png(fURL,hideAlert)
     }
   }
 
+  // 导出完成提示
   if (count > 0) {
-    var showStr =
-      "☀☀☀( ^_^ )☀☀☀\n已导出到：\n" +
-      FLfile.uriToPlatformPath(getFolder(fileName));
-    // alert(showStr);
-    //保存提示
-    showStr += "\n是否打开输出目录？";
-    // showStr = showStr.replace("file:///","");
-    // showStr = showStr.replace("|/",":/");
-    // showStr = showStr.replace("file:///","");
-    // showStr = showStr.replace("|/",":/");
-    var boo = false;
-    if (!hideAlert)
-      boo = confirm(showStr);
-    if ( boo ){
-      if (FLfile.exists(fileNameFirst))
-       selectFile(fileNameFirst); // 尝试选中第一个文件
-      else
-        openFolder(pathName);
-    }
-
+    showResult(fileNameFirst);
   } else {
     alert("( ˇˍˇ )没有找到元件（文件夹内的元件不被导出）");
   }
@@ -408,7 +463,22 @@ function lib2png(fURL,hideAlert)
 
 
 
-
+// 导出完成提示
+//  path = file，打开文件夹并选中文件
+// path = folder，打开文件夹
+function showResult(path) {
+  var fpath = getFolder(path);
+  var showStr ="☀☀☀( ^_^ )☀☀☀\n已导出到：" + FLfile.uriToPlatformPath(fpath);
+  showStr += "\n是否打开输出目录？";
+  // showStr = showStr.replace("file:///","");
+  // showStr = showStr.replace("|/",":/");
+  var boo = confirm(showStr);
+  if (boo)
+    if (FLfile.exists(path))
+      selectFile(path); // 尝试选中第一个文件
+  else
+      openFolder(fpath);
+}
 
 function getFolder(str) {
   var index = str.lastIndexOf("/");
